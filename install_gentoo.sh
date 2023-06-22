@@ -13,13 +13,6 @@ check_command() {
   fi
 }
 
-# Function to run a command and check for errors
-run_command() {
-  echo "Running command: $1"
-  eval "$1"
-  check_command "$1"
-}
-
 # Prompt for timezone
 read -p "Enter your timezone (e.g., America/New_York): " TIMEZONE
 
@@ -80,33 +73,36 @@ case $FS_TYPE in
 esac
 
 # Mount necessary partitions
-run_command "mount /dev/nvme0n1p2 $GENTOO_ROOT"
+mount /dev/nvme0n1p2 $GENTOO_ROOT
+check_command "Failed to mount root partition"
 
 # Configure networking
-run_command "cp /etc/resolv.conf $GENTOO_ROOT/etc/"
-run_command "mount --types proc /proc $GENTOO_ROOT/proc"
-run_command "mount --rbind /sys $GENTOO_ROOT/sys"
-run_command "mount --make-rslave $GENTOO_ROOT/sys"
-run_command "mount --rbind /dev $GENTOO_ROOT/dev"
-run_command "mount --make-rslave $GENTOO_ROOT/dev"
+cp /etc/resolv.conf $GENTOO_ROOT/etc/
+mount --types proc /proc $GENTOO_ROOT/proc
+mount --rbind /sys $GENTOO_ROOT/sys
+mount --make-rslave $GENTOO_ROOT/sys
+mount --rbind /dev $GENTOO_ROOT/dev
+mount --make-rslave $GENTOO_ROOT/dev
 
 # Chroot into the Gentoo environment
-run_command "chroot $GENTOO_ROOT /bin/bash"
+chroot $GENTOO_ROOT /bin/bash
+check_command "Failed to chroot into Gentoo environment"
 
 # Set the time zone
-run_command "echo \"$TIMEZONE\" > /etc/timezone"
-run_command "emerge --config sys-libs/timezone-data"
+echo "$TIMEZONE" > /etc/timezone
+emerge --config sys-libs/timezone-data
+check_command "Failed to set time zone"
 
 # Configure locale
-run_command "echo \"en_US.UTF-8 UTF-8\" >> /etc/locale.gen"
-run_command "locale-gen"
-run_command "eselect locale set 1"
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+locale-gen
+eselect locale set 1
 
 # Configure hostname
-run_command "echo \"$HOSTNAME\" > /etc/hostname"
+echo "$HOSTNAME" > /etc/hostname
 
 # Set the root password
-run_command "passwd"
+passwd
 
 # Partitioning table layout templates
 MBR_LAYOUT="/dev/nvme0n1p1   /boot      ext2    defaults     0 2
@@ -125,87 +121,93 @@ elif [ "$PART_TYPE" == "gpt" ]; then
 fi
 
 # Set up fstab
-run_command "echo \"$PART_LAYOUT\" > /etc/fstab"
+echo "$PART_LAYOUT" > /etc/fstab
 
 # Configure make.conf
-run_command "echo 'MAKEOPTS=\"-j$(nproc)\"' >> /etc/portage/make.conf"
-run_command "echo 'ACCEPT_LICENSE=\"*\"' >> /etc/portage/make.conf"
+echo 'MAKEOPTS="-j$(nproc)"' >> /etc/portage/make.conf
+echo 'ACCEPT_LICENSE="*"' >> /etc/portage/make.conf
 
 # Update portage and world
-run_command "emerge --sync"
-run_command "emerge --ask --verbose --update --deep --newuse @world"
+emerge --sync
+check_command "Failed to sync Portage tree"
+emerge --ask --verbose --update --deep --newuse @world
+check_command "Failed to update portage and world"
 
 # Configure system services
-run_command "rc-update add sshd default"
-run_command "rc-update add dhcpcd default"
+rc-update add sshd default
+rc-update add dhcpcd default
 
 # Configure initramfs
-run_command "emerge sys-kernel/dracut"
-run_command "dracut --kver $(uname -r) initramfs.img"
+emerge sys-kernel/dracut
+dracut --kver $(uname -r) initramfs.img
+check_command "Failed to configure initramfs"
 
 # Configure system files
-run_command "echo \"hostname=\\\"$HOSTNAME\\\"\" > /etc/conf.d/hostname"
-run_command "echo 'rc_parallel=\"NO\"' > /etc/rc.conf"
-run_command "echo 'rc_logger=\"YES\"' >> /etc/rc.conf"
-run_command "echo 'rc_depend_strict=\"YES\"' >> /etc/rc.conf"
-run_command "echo 'unicode=\"YES\"' >> /etc/rc.conf"
+echo "hostname=\"$HOSTNAME\"" > /etc/conf.d/hostname
+echo 'rc_parallel="NO"' > /etc/rc.conf
+echo 'rc_logger="YES"' >> /etc/rc.conf
+echo 'rc_depend_strict="YES"' >> /etc/rc.conf
+echo 'unicode="YES"' >> /etc/rc.conf
 
 # Configure root filesystem permissions
-run_command "chmod 700 /root"
+chmod 700 /root
 
 # Configure portage
-run_command "mkdir -p /etc/portage/repos.conf"
-run_command "cp /usr/share/portage/config/repos.conf /etc/portage/repos.conf/gentoo.conf"
-run_command "emerge --oneshot app-eselect/eselect-repository"
-run_command "eselect repository add gentoo git https://github.com/gentoo/gentoo.git"
-run_command "emaint sync -r gentoo"
-run_command "emerge --oneshot portage"
+mkdir -p /etc/portage/repos.conf
+cp /usr/share/portage/config/repos.conf /etc/portage/repos.conf/gentoo.conf
+emerge --oneshot app-eselect/eselect-repository
+eselect repository add gentoo git https://github.com/gentoo/gentoo.git
+emaint sync -r gentoo
+check_command "Failed to configure portage"
 
 # Configure bootloader
-run_command "emerge sys-boot/efibootmgr"
-run_command "efibootmgr -c -d /dev/nvme0n1 -p 1 -L \"Gentoo\" -l \"\\EFI\\Gentoo\\grubx64.efi\""
+emerge sys-boot/efibootmgr
+efibootmgr -c -d /dev/nvme0n1 -p 1 -L "Gentoo" -l "\EFI\Gentoo\grubx64.efi"
+check_command "Failed to configure bootloader"
 
 # Configure system profile
-run_command "eselect profile set $PROFILE"
+eselect profile set $PROFILE
+check_command "Failed to set system profile"
 
 # Additional system configurations
-run_command "echo 'sys-apps/mlocate cron' >> /etc/portage/package.use/extra"
-run_command "emerge sys-apps/mlocate"
+echo 'sys-apps/mlocate cron' >> /etc/portage/package.use/extra
+emerge sys-apps/mlocate
+check_command "Failed to install mlocate"
 
 # Additional packages
-run_command "emerge app-admin/sysklogd"
-run_command "emerge sys-process/cronie"
-run_command "emerge sys-process/at"
-run_command "emerge net-misc/dhcpcd"
-run_command "emerge net-wireless/wpa_supplicant"
-run_command "emerge sys-fs/e2fsprogs"
-run_command "emerge sys-fs/dosfstools"
-run_command "emerge sys-fs/ntfs3g"
-run_command "emerge net-misc/openssh"
-run_command "emerge app-editors/vim"
-run_command "emerge app-misc/tmux"
-run_command "emerge sys-process/htop"
+emerge app-admin/sysklogd
+emerge sys-process/cronie
+emerge sys-process/at
+emerge net-misc/dhcpcd
+emerge net-wireless/wpa_supplicant
+emerge sys-fs/e2fsprogs
+emerge sys-fs/dosfstools
+emerge sys-fs/ntfs3g
+emerge net-misc/openssh
+emerge app-editors/vim
+emerge app-misc/tmux
+emerge sys-process/htop
 
 # Optional system configurations (choose as needed)
 # Configure system logging with syslog-ng
-run_command "emerge app-admin/syslog-ng"
-run_command "rc-update add syslog-ng default"
+emerge app-admin/syslog-ng
+rc-update add syslog-ng default
 
 # Configure firewall with iptables
-run_command "emerge net-firewall/iptables"
-run_command "rc-update add iptables default"
+emerge net-firewall/iptables
+rc-update add iptables default
 
 # Configure system monitoring with sysstat
-run_command "emerge sys-process/sysstat"
-run_command "rc-update add sysstat default"
+emerge sys-process/sysstat
+rc-update add sysstat default
 
 # Optional packages (choose as needed)
-run_command "emerge app-admin/tmuxinator"
-run_command "emerge app-admin/ansible"
-run_command "emerge app-admin/htop"
+emerge app-admin/tmuxinator
+emerge app-admin/ansible
+emerge app-admin/htop
 
 # Exit chroot and reboot
-run_command "exit"
-run_command "umount -l /mnt/gentoo/dev{/shm,/pts,}"
-run_command "umount -R /mnt/gentoo"
-run_command "reboot"
+exit
+umount -l /mnt/gentoo/dev{/shm,/pts,}
+umount -R /mnt/gentoo
+reboot
