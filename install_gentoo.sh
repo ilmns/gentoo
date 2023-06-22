@@ -56,7 +56,7 @@ echo "$TIMEZONE" > /etc/timezone
 hwclock --systohc
 
 # Configure the locale
-sed -i '/en_US.UTF-8/s/^#//g' /etc/locale.gen
+echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
 locale-gen
 eselect locale set en_US.utf8
 
@@ -72,9 +72,9 @@ emerge --sync
 emerge --oneshot sys-apps/portage
 emerge --update --deep --newuse @world
 
-# Configure the bootloader (GRUB)
+# Install the bootloader (GRUB)
 emerge sys-boot/grub:2
-grub-install --target=x86_64-efi --efi-directory=/boot --removable
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Gentoo
 grub-mkconfig -o /boot/grub/grub.cfg
 
 EOF
