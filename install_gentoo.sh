@@ -50,11 +50,9 @@ cp -L /etc/resolv.conf /mnt/gentoo/etc/
 
 echo "Step 6: Mounting necessary filesystems"
 # Mount necessary filesystems
-mount -t proc proc /mnt/gentoo/proc
+mount --types proc /proc /mnt/gentoo/proc
 mount --rbind /sys /mnt/gentoo/sys
-mount --make-rslave /mnt/gentoo/sys
 mount --rbind /dev /mnt/gentoo/dev
-mount --make-rslave /mnt/gentoo/dev
 
 echo "Step 7: Entering the chroot environment"
 # Entering the chroot environment
