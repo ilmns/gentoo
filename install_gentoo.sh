@@ -53,6 +53,8 @@ echo "Step 6: Mounting necessary filesystems"
 mount --types proc /proc /mnt/gentoo/proc
 mount --rbind /sys /mnt/gentoo/sys
 mount --rbind /dev /mnt/gentoo/dev
+mount --make-rslave /mnt/gentoo/sys
+mount --make-rslave /mnt/gentoo/dev
 
 echo "Step 7: Entering the chroot environment"
 # Entering the chroot environment
@@ -110,14 +112,15 @@ genfstab -U /mnt/gentoo >> /mnt/gentoo/etc/fstab
 
 echo "Step 17: Exiting the chroot environment"
 # Exiting the chroot environment
-umount -R /mnt/gentoo/dev
-umount -R /mnt/gentoo/sys
-umount -R /mnt/gentoo/proc
-exit
+chroot /mnt/gentoo /bin/bash <<EOF
 
-echo "Step 18: Unmounting filesystems"
-# Unmount filesystems
-umount "$EFI_MOUNT"
+umount /proc
+umount /sys
+umount /dev
+
+EOF
+
+umount /mnt/gentoo{/boot/efi,/proc,/sys,}
 umount /mnt/gentoo
 
 echo "Installation completed. You can now reboot your system."
