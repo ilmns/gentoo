@@ -52,8 +52,8 @@ echo "Step 6: Mounting necessary filesystems"
 # Mount necessary filesystems
 mount --types proc /proc /mnt/gentoo/proc
 mount --rbind /sys /mnt/gentoo/sys
-mount --rbind /dev /mnt/gentoo/dev
 mount --make-rslave /mnt/gentoo/sys
+mount --rbind /dev /mnt/gentoo/dev
 mount --make-rslave /mnt/gentoo/dev
 
 echo "Step 7: Entering the chroot environment"
@@ -74,9 +74,9 @@ hwclock --systohc
 
 echo "Step 10: Configuring the locale"
 # Configure the locale
-echo "fi_FI.UTF-8 UTF-8" >> /etc/locale.gen
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
-eselect locale set fi_FI.utf8
+eselect locale set en_US.utf8
 
 echo "Step 11: Setting the hostname"
 # Set the hostname
@@ -112,15 +112,11 @@ genfstab -U /mnt/gentoo >> /mnt/gentoo/etc/fstab
 
 echo "Step 17: Exiting the chroot environment"
 # Exiting the chroot environment
-chroot /mnt/gentoo /bin/bash <<EOF
+umount /mnt/gentoo/proc
+umount /mnt/gentoo/sys
+umount /mnt/gentoo/dev{/pts,/shm}
+umount /mnt/gentoo{/boot/efi,/sys,/dev}
 
-umount /proc
-umount /sys
-umount /dev
-
-EOF
-
-umount /mnt/gentoo{/boot/efi,/proc,/sys,}
 umount /mnt/gentoo
 
 echo "Installation completed. You can now reboot your system."
