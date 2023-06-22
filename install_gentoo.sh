@@ -38,7 +38,7 @@ STAGE3_URL="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-
 STAGE3_FILE=$(wget -qO- "$STAGE3_URL" | grep -Eo 'stage3-amd64-.*\.tar\.xz' | tail -n 1)
 STAGE3_URL="http://distfiles.gentoo.org/releases/amd64/autobuilds/$STAGE3_FILE"
 wget "$STAGE3_URL" -O "/mnt/gentoo/$STAGE3_FILE"
-tar xpvf "/mnt/gentoo/$STAGE3_FILE" -C /mnt/gentoo --xattrs-include='*.*' --numeric-owner
+tar xvf "/mnt/gentoo/$STAGE3_FILE" -C /mnt/gentoo --xattrs-include='*.*' --numeric-owner
 rm "/mnt/gentoo/$STAGE3_FILE"
 
 echo "Step 5: Configuring the Gentoo installation"
@@ -56,9 +56,9 @@ mount --make-rslave /mnt/gentoo/sys
 mount --rbind /dev /mnt/gentoo/dev
 mount --make-rslave /mnt/gentoo/dev
 
-echo "Step 7: Chrooting into the Gentoo environment"
-# Chroot into the Gentoo environment
-chroot /mnt/gentoo /bin/bash << "EOF"
+echo "Step 7: Entering the chroot environment"
+# Entering the chroot environment
+chroot /mnt/gentoo /bin/bash <<EOF
 
 source /etc/profile
 export PS1="(chroot) $PS1"
@@ -110,9 +110,16 @@ echo "Step 16: Generating fstab"
 # Generate fstab
 genfstab -U /mnt/gentoo >> /mnt/gentoo/etc/fstab
 
-echo "Step 17: Unmounting filesystems"
+echo "Step 17: Exiting the chroot environment"
+# Exiting the chroot environment
+umount -R /mnt/gentoo/dev
+umount -R /mnt/gentoo/sys
+umount -R /mnt/gentoo/proc
+exit
+
+echo "Step 18: Unmounting filesystems"
 # Unmount filesystems
-umount -R /mnt/gentoo
 umount "$EFI_MOUNT"
+umount /mnt/gentoo
 
 echo "Installation completed. You can now reboot your system."
