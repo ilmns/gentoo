@@ -78,13 +78,13 @@ check_command "Failed to mount root partition"
 
 # Configure networking
 cp /etc/resolv.conf $GENTOO_ROOT/etc/
+
+# Chroot into the Gentoo environment
 mount --types proc /proc $GENTOO_ROOT/proc
 mount --rbind /sys $GENTOO_ROOT/sys
 mount --make-rslave $GENTOO_ROOT/sys
 mount --rbind /dev $GENTOO_ROOT/dev
 mount --make-rslave $GENTOO_ROOT/dev
-
-# Chroot into the Gentoo environment
 chroot $GENTOO_ROOT /bin/bash
 check_command "Failed to chroot into Gentoo environment"
 
