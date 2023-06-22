@@ -50,7 +50,7 @@ cp -L /etc/resolv.conf /mnt/gentoo/etc/
 
 echo "Step 6: Mounting necessary filesystems"
 # Mount necessary filesystems
-mount --types proc /proc /mnt/gentoo/proc
+mount -t proc proc /mnt/gentoo/proc
 mount --rbind /sys /mnt/gentoo/sys
 mount --make-rslave /mnt/gentoo/sys
 mount --rbind /dev /mnt/gentoo/dev
