@@ -38,8 +38,10 @@ STAGE3_URL="http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-
 STAGE3_FILE=$(wget -qO- "$STAGE3_URL" | grep -Eo 'stage3-amd64-.*\.tar\.xz' | tail -n 1)
 STAGE3_URL="http://distfiles.gentoo.org/releases/amd64/autobuilds/$STAGE3_FILE"
 wget "$STAGE3_URL" -O "/mnt/gentoo/$STAGE3_FILE"
-tar xvf "/mnt/gentoo/$STAGE3_FILE" -C /mnt/gentoo --xattrs-include='*.*' --numeric-owner
+tar xvf "/mnt/gentoo/$STAGE3_FILE" -C /mnt/gentoo --xattrs-include='*.*' --numeric-owner --exclude='*.tar.xz'
 rm "/mnt/gentoo/$STAGE3_FILE"
+
+
 
 echo "Step 5: Configuring the Gentoo installation"
 # Configure the Gentoo installation
@@ -55,6 +57,7 @@ mount --rbind /sys /mnt/gentoo/sys
 mount --make-rslave /mnt/gentoo/sys
 mount --rbind /dev /mnt/gentoo/dev
 mount --make-rslave /mnt/gentoo/dev
+
 
 echo "Step 7: Entering the chroot environment"
 # Entering the chroot environment
