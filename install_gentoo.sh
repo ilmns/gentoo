@@ -139,6 +139,7 @@ rc-update add dhcpcd default
 
 # Configure initramfs
 emerge sys-kernel/dracut
+check_command "Failed to install dracut"
 dracut --kver $(uname -r) initramfs.img
 check_command "Failed to configure initramfs"
 
@@ -156,12 +157,17 @@ chmod 700 /root
 mkdir -p /etc/portage/repos.conf
 cp /usr/share/portage/config/repos.conf /etc/portage/repos.conf/gentoo.conf
 emerge --oneshot app-eselect/eselect-repository
+check_command "Failed to install eselect-repository"
 eselect repository add gentoo git https://github.com/gentoo/gentoo.git
+check_command "Failed to add Gentoo repository"
 emaint sync -r gentoo
-check_command "Failed to configure portage"
+check_command "Failed to sync Gentoo repository"
+emerge --oneshot portage
+check_command "Failed to install portage"
 
 # Configure bootloader
 emerge sys-boot/efibootmgr
+check_command "Failed to install efibootmgr"
 efibootmgr -c -d /dev/nvme0n1 -p 1 -L "Gentoo" -l "\EFI\Gentoo\grubx64.efi"
 check_command "Failed to configure bootloader"
 
