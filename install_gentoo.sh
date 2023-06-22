@@ -1,17 +1,23 @@
 #!/bin/bash
 
-# Set the target disk for installation
-TARGET_DISK="/dev/sda"
+# Set the target NVMe drive for installation
+TARGET_DRIVE="/dev/nvme0n1"
 
 # Set the hostname and timezone
-HOSTNAME="mygentoobox"
-TIMEZONE="America/New_York"
+HOSTNAME="gentoo"
+TIMEZONE="Europe/Helsinki"
 
 # Set the root password
 ROOT_PASSWORD="myrootpassword"
 
-# Mount the target disk
-mount "$TARGET_DISK" /mnt/gentoo
+# Partition the NVMe drive
+parted -s "$TARGET_DRIVE" mklabel gpt
+parted -s "$TARGET_DRIVE" mkpart primary ext4 1MiB 100%
+parted -s "$TARGET_DRIVE" set 1 boot on
+mkfs.ext4 "${TARGET_DRIVE}p1"
+
+# Mount the partition
+mount "${TARGET_DRIVE}p1" /mnt/gentoo
 
 # Set the date
 ntpd -q -g
@@ -68,7 +74,7 @@ emerge --update --deep --newuse @world
 
 # Configure the bootloader (GRUB)
 emerge sys-boot/grub:2
-grub-install "$TARGET_DISK"
+grub-install --target=x86_64-efi --efi-directory=/boot --removable
 grub-mkconfig -o /boot/grub/grub.cfg
 
 EOF
