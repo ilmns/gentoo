@@ -8,37 +8,35 @@ else
   exit 1
 fi
 
-# Install python3 and pip if they are not installed
+# Check if user is root
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root" 
+   exit 1
+fi
+
+# Install python3 if it's not installed
 command -v python3 &>/dev/null || {
   echo "Python 3 not found, installing..."
-  sudo emerge --update --newuse dev-lang/python:3.9
+  emerge --update --newuse dev-lang/python:3.9
 }
 
+# Install pip for Python3 if it's not installed
 command -v pip3 &>/dev/null || {
   echo "pip3 not found, installing..."
-  sudo emerge --update --newuse dev-python/pip
+  emerge --update --newuse dev-python/pip
 }
 
-# Upgrade pip
-python3 -m pip install --upgrade pip
+# Update pip
+echo "Updating pip..."
+pip3 install --upgrade pip
 
-# Install necessary python packages
+# Install the necessary python packages
 echo "Installing necessary Python packages..."
-if pip3 install -r requirements.txt; then
-  echo "Python packages installed successfully."
-else
-  echo "Error installing Python packages. Check requirements.txt file."
-  exit 1
-fi
+pip3 install -r requirements.txt
 
 # Make the script executable
-if chmod +x install_gentoo.py; then
-  echo "install_gentoo.py is now executable."
-else
-  echo "Error making install_gentoo.py executable."
-  exit 1
-fi
+chmod +x install_gentoo.py
+echo "install_gentoo.py is now executable."
 
 # Execute the script
-echo "Running the script..."
-sudo ./install_gentoo.py
+./install_gentoo.py
