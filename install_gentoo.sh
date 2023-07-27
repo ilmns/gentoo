@@ -86,15 +86,15 @@ print_status "Step 2: Formatting partitions"
 mkfs.fat -F 32 "${TARGET_DRIVE}p1" || print_error_and_exit "Failed to format EFI partition."
 mkfs.ext4 "${TARGET_DRIVE}p2" || print_error_and_exit "Failed to format root partition."
 
+
 print_status "Step 3: Mounting the partitions"
 # Mount the partitions
 mount "${TARGET_DRIVE}p2" /mnt/gentoo || print_error_and_exit "Failed to mount root partition."
 mkdir -p "$EFI_MOUNT" || print_error_and_exit "Failed to create EFI mount point."
 mount "${TARGET_DRIVE}p1" "$EFI_MOUNT" || print_error_and_exit "Failed to mount EFI partition."
 
-
+# Set the date outside the chroot environment
 print_status "Step 4: Setting the date"
-# Set the date
 ntpd -q -g
 
 print_status "Step 5: Downloading the Gentoo stage3 tarball"
