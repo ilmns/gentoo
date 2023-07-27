@@ -42,7 +42,6 @@ EFI_MOUNT="/mnt/gentoo/boot/efi"
 mkdir -p "$EFI_MOUNT" || print_error_and_exit "Failed to create EFI mount point: $EFI_MOUNT"
 
 
-
 # Automatically set the hostname for the system
 HOSTNAME="gentoo"
 echo "Hostname: $HOSTNAME"
