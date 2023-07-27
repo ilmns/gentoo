@@ -112,8 +112,8 @@ cp /mnt/gentoo/usr/share/portage/config/repos.conf /mnt/gentoo/etc/portage/repos
 cp -L /etc/resolv.conf /mnt/gentoo/etc/
 
 # Optional: Configure USE flags
-if [[ -n "$OPTIONAL_USE_FLAGS" ]]; then
-  echo "USE=\"$OPTIONAL_USE_FLAGS\"" >> /mnt/gentoo/etc/portage/make.conf
+if [[ -n "$USE_FLAGS" ]]; then
+  echo "USE=\"$USE_FLAGS\"" >> /mnt/gentoo/etc/portage/make.conf
 fi
 
 print_status "Step 7: Mounting necessary filesystems"
