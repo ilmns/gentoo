@@ -108,7 +108,7 @@ mount "${TARGET_DRIVE}p1" "$EFI_MOUNT" || print_error_and_exit "Failed to mount 
 
 # Step 4: Setting the date
 print_status "Step 4: Setting the date"
-ntpd -q -g
+timedatectl set-ntp true
 
 # Step 5: Downloading the Gentoo stage3 tarball
 print_status "Step 5: Downloading the Gentoo stage3 tarball"
