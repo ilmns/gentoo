@@ -32,7 +32,9 @@ read -rp "Enter the target NVMe drive for installation (e.g., /dev/nvme0n1): " T
 
 # Prompt for the EFI partition mount point
 read -rp "Enter the EFI partition mount point (e.g., /mnt/gentoo/boot/efi): " EFI_MOUNT
-[[ -d "$EFI_MOUNT" ]] || print_error_and_exit "Invalid mount point: $EFI_MOUNT"
+if [[ ! -d "$EFI_MOUNT" ]]; then
+  print_error_and_exit "Invalid mount point: $EFI_MOUNT"
+fi
 
 # Prompt for the hostname for the system
 read -rp "Enter the hostname for the system: " HOSTNAME
