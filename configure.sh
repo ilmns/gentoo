@@ -1,61 +1,52 @@
 #!/bin/bash
 
-# Check for OS (assume Gentoo)
-if [[ "$(uname)" == "Linux" ]]; then
-  echo "Configuring setup for Gentoo Linux..."
+# Checking OS
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    echo "Configuring setup for Gentoo Linux..."
 else
-  echo "Unsupported operating system. This script is for Gentoo Linux only."
-  exit 1
+    echo "Unsupported operating system. This script is for Gentoo Linux only."
+    exit 1
 fi
 
-# Check if user is root
+# Checking if user is root
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root" 
-   exit 1
+    echo "This script must be run as root"
+    exit 1
 fi
 
-# Install python3 if it's not installed
-command -v python3 &>/dev/null || {
-  echo "Python 3 not found, installing..."
-  emerge --update --newuse dev-lang/python:3.9
-}
-
-# Check python version
-python_version=$(python3 -c 'import sys; print(sys.version_info.major)')
-if [[ $python_version -eq 3 ]]; then
-  echo "Python 3 is installed"
+# Checking Python3
+python3 --version &> /dev/null
+if [[ $? -ne 0 ]]; then
+    echo "Python3 is not installed. Installing..."
+    emerge --update --newuse dev-lang/python:3.9
 else
-  echo "Python 3 is not installed"
-  exit 1
+    echo "Python3 is installed"
 fi
 
-# Install pip for Python3 if it's not installed
-command -v pip3 &>/dev/null || {
-  echo "pip3 not found, installing..."
-  emerge --update --newuse dev-python/pip
-  python3 -m ensurepip --upgrade
-}
-
-# Check pip version
-pip_version=$(pip3 -V | awk '{print $2}')
-if [[ $pip_version == *"pip"* ]]; then
-  echo "pip is installed"
+# Checking pip3
+pip3 --version &> /dev/null
+if [[ $? -ne 0 ]]; then
+    echo "pip3 is not installed. Installing..."
+    emerge --update --newuse dev-python/pip
+    python3 -m ensurepip --upgrade
 else
-  echo "pip is not installed"
-  exit 1
+    echo "pip3 is installed"
 fi
 
-# Update pip
+# Updating pip
 echo "Updating pip..."
 pip3 install --upgrade pip
 
-# Install the necessary python packages
+# Installing required Python packages from requirements.txt
 echo "Installing necessary Python packages..."
-pip3 install -r requirements.txt
+while read package; do
+    pip3 install "$package"
+done < requirements.txt
 
-# Make the script executable
+# Making install_gentoo.py executable
+echo "Making install_gentoo.py executable"
 chmod +x install_gentoo.py
 echo "install_gentoo.py is now executable."
 
-# Execute the script
+# Running install_gentoo.py
 ./install_gentoo.py
