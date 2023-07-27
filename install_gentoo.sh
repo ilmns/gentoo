@@ -30,9 +30,16 @@ print_status "Welcome to the Gentoo Linux installation script!"
 read -rp "Enter the target NVMe drive for installation (e.g., /dev/nvme0n1): " TARGET_DRIVE
 [[ -b "$TARGET_DRIVE" ]] || print_error_and_exit "Invalid drive: $TARGET_DRIVE"
 
+# Check if the NVMe drive is already mounted and prompt to unmount it
+if mount | grep -q "$TARGET_DRIVE"; then
+  prompt_yes_no "The target NVMe drive is already mounted. Do you want to unmount it and proceed with the installation?" || exit 0
+  umount "$TARGET_DRIVE"* || print_error_and_exit "Failed to unmount the target NVMe drive. Please make sure it is not in use and try again."
+fi
+
 # Automatically create and set the EFI partition mount point
 EFI_MOUNT="/mnt/gentoo/boot/efi"
 mkdir -p "$EFI_MOUNT" || print_error_and_exit "Failed to create EFI mount point: $EFI_MOUNT"
+
 
 # Automatically set the hostname for the system
 HOSTNAME="gentoo"
