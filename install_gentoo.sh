@@ -78,10 +78,12 @@ if ! parted -s "$TARGET_DRIVE" print | grep -q 'gpt'; then
   parted -s "$TARGET_DRIVE" set 1 esp on || print_error_and_exit "Failed to set ESP flag on EFI partition."
   parted -s "$TARGET_DRIVE" mkpart primary ext4 512MiB 100% || print_error_and_exit "Failed to create root partition."
   sleep 1  # Wait for the partition changes to take effect
-  partprobe "$TARGET_DRIVE" || print_error_and_exit "Failed to update partition table."
 else
   print_status "The target NVMe drive is already partitioned with GPT."
 fi
+
+# Update partition table outside the chroot environment
+partprobe "$TARGET_DRIVE" || print_error_and_exit "Failed to update partition table."
 
 print_status "Step 2: Formatting partitions"
 # Format the partitions
