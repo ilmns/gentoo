@@ -30,17 +30,17 @@ print_status "Welcome to the Gentoo Linux installation script!"
 read -rp "Enter the target NVMe drive for installation (e.g., /dev/nvme0n1): " TARGET_DRIVE
 [[ -b "$TARGET_DRIVE" ]] || print_error_and_exit "Invalid drive: $TARGET_DRIVE"
 
-# Prompt for the EFI partition mount point
-read -rp "Enter the EFI partition mount point (e.g., /mnt/gentoo/boot/efi): " EFI_MOUNT
-if [[ ! -d "$EFI_MOUNT" ]]; then
-  print_error_and_exit "Invalid mount point: $EFI_MOUNT"
-fi
+# Automatically create and set the EFI partition mount point
+EFI_MOUNT="/mnt/gentoo/boot/efi"
+mkdir -p "$EFI_MOUNT" || print_error_and_exit "Failed to create EFI mount point: $EFI_MOUNT"
 
-# Prompt for the hostname for the system
-read -rp "Enter the hostname for the system: " HOSTNAME
+# Automatically set the hostname for the system
+HOSTNAME="gentoo"
+echo "Hostname: $HOSTNAME"
 
-# Prompt for the timezone
-read -rp "Enter the timezone (e.g., Europe/Helsinki): " TIMEZONE
+# Automatically set the timezone
+TIMEZONE="Europe/Helsinki"
+echo "Timezone: $TIMEZONE"
 
 # Prompt for the root password
 while true; do
@@ -60,7 +60,6 @@ prompt_yes_no "Are you sure you want to proceed with the installation?" || exit 
 
 set -e
 
-
 print_status "Step 1: Partitioning the NVMe drive"
 
 # Check if the NVMe drive is already mounted or in use
@@ -68,20 +67,15 @@ if mount | grep -q "$TARGET_DRIVE"; then
   print_error_and_exit "The target NVMe drive is already mounted. Please unmount it and try again."
 fi
 
-# Unmount partitions, if any
-if mount | grep -q "${TARGET_DRIVE}p"; then
-  umount "${TARGET_DRIVE}p"* || print_error_and_exit "Failed to unmount partitions."
-fi
-
-# Partition the NVMe drive if it's not already partitioned with GPT
-if ! parted -s "$TARGET_DRIVE" print | grep -q 'gpt'; then
+# Check if the target NVMe drive is already partitioned with GPT
+if parted -s "$TARGET_DRIVE" print | grep -q 'gpt'; then
+  print_status "The target NVMe drive is already partitioned with GPT."
+else
   parted -s "$TARGET_DRIVE" mklabel gpt || print_error_and_exit "Failed to create GPT partition table."
   parted -s "$TARGET_DRIVE" mkpart primary fat32 1MiB 512MiB || print_error_and_exit "Failed to create EFI partition."
   parted -s "$TARGET_DRIVE" set 1 esp on || print_error_and_exit "Failed to set ESP flag on EFI partition."
   parted -s "$TARGET_DRIVE" mkpart primary ext4 512MiB 100% || print_error_and_exit "Failed to create root partition."
   sleep 1  # Wait for the partition changes to take effect
-else
-  print_status "The target NVMe drive is already partitioned with GPT."
 fi
 
 # Update partition table outside the chroot environment
