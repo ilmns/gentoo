@@ -13,6 +13,8 @@ TIMEZONE="Europe/Helsinki"
 # Set the root password
 ROOT_PASSWORD="myrootpassword"
 
+set -e
+
 echo "Step 1: Partitioning the NVMe drive"
 # Partition the NVMe drive
 parted -s "$TARGET_DRIVE" mklabel gpt
@@ -59,7 +61,6 @@ mount --make-rslave /mnt/gentoo/dev
 echo "Step 7: Entering the chroot environment"
 # Entering the chroot environment
 chroot /mnt/gentoo /bin/bash <<EOF
-
 source /etc/profile
 export PS1="(chroot) $PS1"
 
@@ -74,9 +75,9 @@ hwclock --systohc
 
 echo "Step 10: Configuring the locale"
 # Configure the locale
-echo "fi_FI.UTF-8 UTF-8" >> /etc/locale.gen
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
-eselect locale set fi_FI.utf8
+eselect locale set en_US.utf8
 
 echo "Step 11: Setting the hostname"
 # Set the hostname
@@ -112,14 +113,7 @@ genfstab -U /mnt/gentoo >> /mnt/gentoo/etc/fstab
 
 echo "Step 17: Exiting the chroot environment"
 # Exiting the chroot environment
-chroot /mnt/gentoo /bin/bash <<EOF
-
-umount /proc
-umount /sys
-umount /dev
-
-EOF
-
+umount -l /mnt/gentoo/dev{/shm,/pts,}
 umount /mnt/gentoo{/boot/efi,/proc,/sys,}
 umount /mnt/gentoo
 
