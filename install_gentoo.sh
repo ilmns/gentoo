@@ -50,10 +50,14 @@ while true; do
   print_status "Passwords do not match. Please try again."
 done
 
-# Prompt for optional USE flags (comma-separated)
-read -rp "Enter optional USE flags (comma-separated, or press Enter for default): " OPTIONAL_USE_FLAGS
+# Prompt for USE flags (comma-separated)
+read -rp "Enter USE flags (comma-separated, or press Enter for default): " USE_FLAGS
+
+# Confirmation before starting the installation
+prompt_yes_no "Are you sure you want to proceed with the installation?" || exit 0
 
 set -e
+
 
 print_status "Step 1: Partitioning the NVMe drive"
 
