@@ -28,53 +28,42 @@ def check_root():
 
 def check_network():
     notify_step("Checking the network connection")
-    url = "http://www.google.com"
-    timeout = 5
     try:
-        _ = requests.get(url, timeout=timeout)
+        requests.get("http://www.google.com", timeout=5)
         print("Internet connection is working")
     except requests.ConnectionError:
         sys.exit("No internet connection. Please check and try again.")
 
 def fetch_latest_url():
     notify_step("Fetching the latest stage3 tarball URL")
-    url = "http://distfiles.gentoo.org/releases/amd64/autobuilds/current-stage3-amd64/"
     try:
-        response = requests.get(url)
+        response = requests.get("http://distfiles.gentoo.org/releases/amd64/autobuilds/current-stage3-amd64/")
         soup = BeautifulSoup(response.text, 'html.parser')
         for link in soup.find_all('a'):
             href = link.get('href')
             if "stage3-amd64" in href:
-                return url + href
+                return f"{url}{href}"
     except requests.exceptions.RequestException as err:
         sys.exit(f"Error fetching latest URL: {err}")
     sys.exit("Unable to find latest stage3 tarball URL")
 
 def run_command(command, exit_on_fail=True):
     try:
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        if process.returncode != 0:
-            print(f"\nCommand Execution Failed!")
-            print(f"Command: {command}")
-            print(f"Error Code: {process.returncode}")
-            print(f"Error Message: {stderr.decode()}")
-            if exit_on_fail:
-                sys.exit(1)
-        else:
-            print(f"\nCommand Execution Successful!")
-            print(f"Command: {command}")
-            print(f"Output: {stdout.decode()}")
-        return process.returncode, stdout.decode(), stderr.decode()
-    except Exception as e:
-        print(f"Error while running command: {command}. Error message: {str(e)}")
+        process = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        print(f"\nCommand Execution Successful!")
+        print(f"Command: {command}")
+        print(f"Output: {process.stdout.decode()}")
+    except subprocess.CalledProcessError as e:
+        print(f"\nCommand Execution Failed!")
+        print(f"Command: {command}")
+        print(f"Error Code: {e.returncode}")
+        print(f"Error Message: {e.stderr.decode()}")
         if exit_on_fail:
             sys.exit(1)
 
 def list_disks():
     notify_step("Listing available disks")
-    _, stdout, _ = run_command("lsblk -dpno NAME,SIZE", exit_on_fail=False)
-    disks = stdout.split("\n")
+    disks = subprocess.check_output("lsblk -dpno NAME,SIZE", shell=True, text=True).split("\n")
     for i, disk in enumerate(disks, start=1):
         print(f"{i}. {disk}")
     return disks
@@ -85,10 +74,10 @@ def partition_disks():
     while True:
         try:
             disk_num = int(input("Please enter the number of the disk to install Gentoo on: "))
+            disk_name = disks[disk_num-1].split()[0]
             break
         except ValueError:
             print("Invalid input. Please enter a number.")
-    disk_name = disks[disk_num-1].split()[0]
     commands = [
         f"parted -s {disk_name} mklabel gpt",
         f"parted -s {disk_name} mkpart primary ext4 1MiB 100%",
@@ -145,19 +134,8 @@ def check_password_strength(password):
 
 def configure_system(hostname, username):
     notify_step("Configuring system with user provided details")
-    while True:
-        root_password = getpass("Please enter the root password: ")
-        if check_password_strength(root_password):
-            break
-        else:
-            print("Password must contain at least eight characters, one uppercase letter, one lowercase letter, and one number.")
-
-    while True:
-        user_password = getpass(f"Please enter the password for {username}: ")
-        if check_password_strength(user_password):
-            break
-        else:
-            print("Password must contain at least eight characters, one uppercase letter, one lowercase letter, and one number.")
+    root_password = get_secure_password("root")
+    user_password = get_secure_password(username)
 
     encrypted_root_password = crypt.crypt(root_password)
     encrypted_user_password = crypt.crypt(user_password)
@@ -170,6 +148,13 @@ def configure_system(hostname, username):
     ]
     for cmd in commands:
         run_command(cmd)
+
+def get_secure_password(user):
+    while True:
+        password = getpass(f"Please enter the password for {user}: ")
+        if check_password_strength(password):
+            return password
+        print("Password must contain at least eight characters, one uppercase letter, one lowercase letter, and one number.")
 
 def main():
     args = parse_args()
@@ -185,9 +170,9 @@ def main():
                     "x11-wm/bspwm", "x11-terms/rxvt-unicode", "www-client/firefox", "app-editors/vim", "media-gfx/feh", "media-sound/alsa-utils"]
         install_packages(packages)
         configure_kernel()
-        configure_system(hostname="gentoo", username="user")
+        configure_system("gentoo", "user")
     except Exception as e:
-        print(f"Unexpected error occurred: {str(e)}")
+        print(f"An error occurred: {str(e)}")
         sys.exit(1)
 
 if __name__ == "__main__":
