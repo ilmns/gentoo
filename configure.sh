@@ -1,33 +1,22 @@
 #!/bin/bash
 
-# Check for OS (assume Ubuntu, but you can add other OS checks)
+# Check for OS (assume Gentoo)
 if [[ "$(uname)" == "Linux" ]]; then
-  echo "Configuring setup for Linux..."
+  echo "Configuring setup for Gentoo Linux..."
 else
-  echo "Unsupported operating system. This script is for Linux only."
+  echo "Unsupported operating system. This script is for Gentoo Linux only."
   exit 1
 fi
 
 # Install python3 and pip if they are not installed
 command -v python3 &>/dev/null || {
   echo "Python 3 not found, installing..."
-  sudo apt-get update
-  if sudo apt-get install -y python3; then
-    echo "Python 3 installed successfully."
-  else
-    echo "Error installing Python 3"
-    exit 1
-  fi
+  sudo emerge --update --newuse dev-lang/python:3.9
 }
 
 command -v pip3 &>/dev/null || {
   echo "pip3 not found, installing..."
-  if sudo apt-get install -y python3-pip; then
-    echo "pip3 installed successfully."
-  else
-    echo "Error installing pip3"
-    exit 1
-  fi
+  sudo emerge --update --newuse dev-python/pip
 }
 
 # Upgrade pip
