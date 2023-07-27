@@ -56,24 +56,36 @@ read -rp "Enter optional USE flags (comma-separated, or press Enter for default)
 set -e
 
 print_status "Step 1: Partitioning the NVMe drive"
+
+# Check if the NVMe drive is already mounted or in use
+if mount | grep -q "$TARGET_DRIVE"; then
+  print_error_and_exit "The target NVMe drive is already mounted. Please unmount it and try again."
+fi
+
+# Unmount partitions, if any
+if mount | grep -q "${TARGET_DRIVE}p"; then
+  umount "${TARGET_DRIVE}p"* || print_error_and_exit "Failed to unmount partitions."
+fi
+
 # Partition the NVMe drive
-parted -s "$TARGET_DRIVE" mklabel gpt
-parted -s "$TARGET_DRIVE" mkpart primary fat32 1MiB 512MiB
-parted -s "$TARGET_DRIVE" set 1 esp on
-parted -s "$TARGET_DRIVE" mkpart primary ext4 512MiB 100%
+parted -s "$TARGET_DRIVE" mklabel gpt || print_error_and_exit "Failed to create GPT partition table."
+parted -s "$TARGET_DRIVE" mkpart primary fat32 1MiB 512MiB || print_error_and_exit "Failed to create EFI partition."
+parted -s "$TARGET_DRIVE" set 1 esp on || print_error_and_exit "Failed to set ESP flag on EFI partition."
+parted -s "$TARGET_DRIVE" mkpart primary ext4 512MiB 100% || print_error_and_exit "Failed to create root partition."
 sleep 1  # Wait for the partition changes to take effect
-partprobe "$TARGET_DRIVE"
+partprobe "$TARGET_DRIVE" || print_error_and_exit "Failed to update partition table."
 
 print_status "Step 2: Formatting partitions"
 # Format the partitions
-mkfs.fat -F 32 "${TARGET_DRIVE}p1"
-mkfs.ext4 "${TARGET_DRIVE}p2"
+mkfs.fat -F 32 "${TARGET_DRIVE}p1" || print_error_and_exit "Failed to format EFI partition."
+mkfs.ext4 "${TARGET_DRIVE}p2" || print_error_and_exit "Failed to format root partition."
 
 print_status "Step 3: Mounting the partitions"
 # Mount the partitions
-mount "${TARGET_DRIVE}p2" /mnt/gentoo
-mkdir -p "$EFI_MOUNT"
-mount "${TARGET_DRIVE}p1" "$EFI_MOUNT"
+mount "${TARGET_DRIVE}p2" /mnt/gentoo || print_error_and_exit "Failed to mount root partition."
+mkdir -p "$EFI_MOUNT" || print_error_and_exit "Failed to create EFI mount point."
+mount "${TARGET_DRIVE}p1" "$EFI_MOUNT" || print_error_and_exit "Failed to mount EFI partition."
+
 
 print_status "Step 4: Setting the date"
 # Set the date
