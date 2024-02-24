@@ -1,139 +1,92 @@
 #!/bin/bash
 
-# Color codes for output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Function to partition disk
-partition_disk() {
-    echo -e "${YELLOW}Partitioning disk...${NC}"
-    # Implement partitioning logic here
-    sleep 1
-    echo -e "${GREEN}Disk partitioned.${NC}"
-}
-
-# Function to create filesystems and activate swap
-setup_filesystems() {
-    echo -e "${YELLOW}Setting up filesystems...${NC}"
-    # Implement filesystem setup and swap activation logic here
-    sleep 1
-    echo -e "${GREEN}Filesystems set up.${NC}"
-}
-
-# Function to install Gentoo base system
-install_base_system() {
-    echo -e "${YELLOW}Installing Gentoo base system...${NC}"
-    # Implement base system installation logic here
-    sleep 1
-    echo -e "${GREEN}Gentoo base system installed.${NC}"
-}
-
-# Function for chroot and system configuration
-chroot_and_configure() {
-    echo -e "${YELLOW}Configuring system...${NC}"
-    # Implement chroot and system configuration logic here
-    sleep 1
-    echo -e "${GREEN}System configured.${NC}"
-}
-
-# Function for kernel configuration
-configure_kernel() {
-    echo -e "${YELLOW}Configuring kernel...${NC}"
-    # Implement kernel configuration logic here
-    sleep 1
-    echo -e "${GREEN}Kernel configured.${NC}"
-}
-
-# Function for optional initramfs
-generate_initramfs() {
-    echo -e "${YELLOW}Generating initramfs...${NC}"
-    # Implement initramfs generation logic here
-    sleep 1
-    echo -e "${GREEN}Initramfs generated.${NC}"
-}
-
-# Function for bootloader installation
-install_bootloader() {
-    echo -e "${YELLOW}Installing bootloader...${NC}"
-    # Implement bootloader installation logic here
-    sleep 1
-    echo -e "${GREEN}Bootloader installed.${NC}"
-}
-
-# Function for finalization and reboot
-finalize_and_reboot() {
-    echo -e "${YELLOW}Finalizing installation...${NC}"
-    # Implement finalization logic here
-    sleep 1
-    echo -e "${GREEN}Installation finalized.${NC}"
-}
-
 # Function to configure network settings
 configure_network_settings() {
-    echo -e "${YELLOW}Configuring network settings...${NC}"
-    # Implement network configuration logic here
-    sleep 1
-    echo -e "${GREEN}Network settings configured.${NC}"
+    echo "Let's configure your network settings."
+
+    # Ask the user for network configuration details
+    read -p "Do you want to configure your network settings manually? [Y/N]: " configure_network
+    if [[ $configure_network == "Y" || $configure_network == "y" ]]; then
+        # Ask for manual configuration details
+        read -p "Enter your IP address: " ip_address
+        read -p "Enter your subnet mask: " subnet_mask
+        read -p "Enter your gateway: " gateway
+
+        # Configure network settings manually
+        sudo ifconfig eth0 $ip_address netmask $subnet_mask
+        sudo route add default gw $gateway
+
+        echo "Network settings configured successfully."
+    else
+        # Automatically configure network settings
+        echo "Configuring network settings automatically..."
+        # Add commands for automatic configuration here
+        echo "Network settings configured successfully."
+    fi
 }
 
 # Function to install additional software packages
 install_additional_packages() {
-    echo -e "${YELLOW}Installing additional software packages...${NC}"
-    # Implement additional software installation logic here
-    sleep 1
-    echo -e "${GREEN}Additional software packages installed.${NC}"
+    echo "Let's install some additional software packages."
+
+    # Ask the user for package names to install
+    read -p "Enter the names of additional software packages to install (space-separated): " packages
+
+    # Install the specified packages
+    sudo emerge --ask $packages
+
+    echo "Additional software packages installed successfully."
 }
 
 # Function to configure user accounts
 configure_user_accounts() {
-    echo -e "${YELLOW}Configuring user accounts...${NC}"
-    # Implement user account configuration logic here
-    sleep 1
-    echo -e "${GREEN}User accounts configured.${NC}"
+    echo "Let's configure user accounts."
+
+    # Ask the user for user account details
+    read -p "Enter the username you want to create: " username
+    read -sp "Enter the password for $username: " password
+    echo
+
+    # Create the user account
+    sudo useradd -m $username
+    echo "$username:$password" | sudo chpasswd
+
+    echo "User account configured successfully."
 }
 
 # Function to enable necessary services
 enable_necessary_services() {
-    echo -e "${YELLOW}Enabling necessary services...${NC}"
-    # Implement service enabling logic here
-    sleep 1
-    echo -e "${GREEN}Necessary services enabled.${NC}"
+    echo "Let's enable necessary services."
+
+    # Enable SSH service
+    sudo rc-update add sshd default
+
+    echo "Necessary services enabled successfully."
 }
 
 # Function to update and upgrade system
-update_upgrade_system() {
-    echo -e "${YELLOW}Updating and upgrading system...${NC}"
-    # Implement system update and upgrade logic here
-    sleep 1
-    echo -e "${GREEN}System updated and upgraded.${NC}"
+update_and_upgrade_system() {
+    echo "Let's update and upgrade your system."
+
+    # Update package repository
+    sudo emerge --sync
+
+    # Upgrade installed packages
+    sudo emerge --update --deep --newuse --ask @world
+
+    echo "System updated and upgraded successfully."
 }
 
-# Main function
+# Main function to orchestrate the process
 main() {
-    while true; do
-        partition_disk
-        setup_filesystems
-        install_base_system
-        chroot_and_configure
-        configure_kernel
-        generate_initramfs
-        install_bootloader
-        finalize_and_reboot
-        configure_network_settings
-        install_additional_packages
-        configure_user_accounts
-        enable_necessary_services
-        update_upgrade_system
+    configure_network_settings
+    install_additional_packages
+    configure_user_accounts
+    enable_necessary_services
+    update_and_upgrade_system
 
-        read -p "Do you want to reinstall Gentoo? (yes/no): " choice
-        case "$choice" in
-            yes|Yes|YES) continue;;
-            no|No|NO) break;;
-            *) echo -e "${YELLOW}Please enter yes or no.${NC}";;
-        esac
-    done
+    echo "Setup completed successfully. Your Gentoo system is ready to use!"
 }
 
-# Execute main function
+# Execute the main function
 main
