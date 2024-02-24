@@ -4,7 +4,7 @@
 configure_network_settings() {
     echo "Let's configure your network settings."
 
-    # Ask the user for network configuration details
+    # Ask the user for network configuration preference
     read -p "Do you want to configure your network settings manually? [Y/N]: " configure_network
     if [[ $configure_network == "Y" || $configure_network == "y" ]]; then
         # Ask for manual configuration details
@@ -61,7 +61,7 @@ enable_necessary_services() {
     # Enable SSH service
     sudo rc-update add sshd default
 
-    echo "Necessary services enabled successfully."
+    echo "SSH service enabled successfully."
 }
 
 # Function to update and upgrade system
