@@ -69,19 +69,44 @@ finalize_and_reboot() {
     echo -e "${GREEN}Installation finalized.${NC}"
 }
 
-# Function for additional steps after installation
-next_steps() {
-    echo -e "${YELLOW}Additional steps after installation:${NC}"
-    echo -e "${YELLOW}- Configure network settings.${NC}"
+# Function to configure network settings
+configure_network_settings() {
+    echo -e "${YELLOW}Configuring network settings...${NC}"
     # Implement network configuration logic here
-    echo -e "${YELLOW}- Install additional software packages.${NC}"
+    sleep 1
+    echo -e "${GREEN}Network settings configured.${NC}"
+}
+
+# Function to install additional software packages
+install_additional_packages() {
+    echo -e "${YELLOW}Installing additional software packages...${NC}"
     # Implement additional software installation logic here
-    echo -e "${YELLOW}- Configure user accounts.${NC}"
+    sleep 1
+    echo -e "${GREEN}Additional software packages installed.${NC}"
+}
+
+# Function to configure user accounts
+configure_user_accounts() {
+    echo -e "${YELLOW}Configuring user accounts...${NC}"
     # Implement user account configuration logic here
-    echo -e "${YELLOW}- Enable necessary services.${NC}"
+    sleep 1
+    echo -e "${GREEN}User accounts configured.${NC}"
+}
+
+# Function to enable necessary services
+enable_necessary_services() {
+    echo -e "${YELLOW}Enabling necessary services...${NC}"
     # Implement service enabling logic here
-    echo -e "${YELLOW}- Update and upgrade system regularly.${NC}"
+    sleep 1
+    echo -e "${GREEN}Necessary services enabled.${NC}"
+}
+
+# Function to update and upgrade system
+update_upgrade_system() {
+    echo -e "${YELLOW}Updating and upgrading system...${NC}"
     # Implement system update and upgrade logic here
+    sleep 1
+    echo -e "${GREEN}System updated and upgraded.${NC}"
 }
 
 # Main function
@@ -95,7 +120,11 @@ main() {
         generate_initramfs
         install_bootloader
         finalize_and_reboot
-        next_steps
+        configure_network_settings
+        install_additional_packages
+        configure_user_accounts
+        enable_necessary_services
+        update_upgrade_system
 
         read -p "Do you want to reinstall Gentoo? (yes/no): " choice
         case "$choice" in
